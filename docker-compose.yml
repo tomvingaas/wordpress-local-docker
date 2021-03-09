@@ -1,0 +1,59 @@
+version: "3"
+services:
+  db:
+    image: mysql:5.7
+    # https://docs.docker.com/compose/compose-file/#restart
+    restart: always
+    # https://nickjanetakis.com/blog/docker-tip-28-named-volumes-vs-path-based-volumes
+    volumes:
+      - db_data:/var/lib/mysql
+    # https://docs.docker.com/compose/compose-file/#environment
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    networks:
+      - wp
+  # https://hub.docker.com/_/wordpress
+  wordpress:
+    depends_on:
+      - db
+    # https://docs.docker.com/compose/compose-file/#image
+    image: wordpress
+    # https://docs.docker.com/compose/compose-file/#restart
+    restart: always
+    # https://docs.docker.com/compose/compose-file/#volumes
+    # I like to map only wp-content
+    # We should not care about WP core files
+    volumes: ["./:/var/www/html/wp-content"]
+    # Add environment variables
+    # https://docs.docker.com/compose/compose-file/#environment
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - wp
+  phpmyadmin:
+    depends_on:
+      - db
+    # https://docs.docker.com/compose/compose-file/#image
+    image: phpmyadmin/phpmyadmin
+    # https://docs.docker.com/compose/compose-file/#restart
+    restart: always
+    ports:
+      - 8080:80
+    # https://docs.docker.com/compose/compose-file/#environment
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - wp
+networks:
+  wp:
+volumes:
+  db_data:
